@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  preprocess:
+    build: ./preprocess
+    ports:
+     - "5000:5000"
+    networks:
+     - my_network
+
+  db:
+   build: ./db
+   environment:
+     MYSQL_ROOT_PASSWORD: root_password
+     MYSQL_DATABASE: my_database
+     MYSQL_USER: my_user
+     MYSQL_PASSWORD: my_password
+   networks:
+     - my_network
+   volumes:
+     - db_data:/var/lib/mysql
+
+  train:
+    build: ./train
+    ports:
+      - "5001:5001"
+    networks:
+      - my_network
+
+  streamlit_app:
+    build: ./app
+    ports:
+      - "5005:5005"
+    networks:
+      - my_network
+
+
+networks:
+  my_network:
+    driver: bridge
+
+volumes:
+  db_data:
