@@ -24,8 +24,7 @@ After pressing this button, the main panel will display the metrics of the built
 
 ### Architecture
 
-
-![](C:\Users\wnadw\Desktop\schemat.png "architecture")
+![schemat](https://github.com/Weronika59/opc_project/assets/75950630/675b3708-f40c-4e19-a874-8f2dc5235678)
 
 *database* container is responsible for storing data.
 
