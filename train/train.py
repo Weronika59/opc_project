@@ -10,12 +10,17 @@ from sklearn.metrics import f1_score
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import roc_curve
+from pydantic import BaseModel
+
+import time
+time.sleep(5)
 
 # Function for getting preprocessed data from 'preprocess'
 def get_preprocess_data():
     response = requests.get('http://preprocess:5000/preprocess_data/')    
     data = response.json()['data']
     return data
+
     
 # Defining model with hyperparameters
 def train_model(X_train, y_train, **hyperparameters):
@@ -70,14 +75,15 @@ def eval_model():
 
 
 MODEL = initial_train()
-    
+
 
 app = FastAPI()
+
+
 # Model training
 @app.post("/train/")
 def train_model2(hyperparameters: Dict[str, Any]):
     data = get_preprocess_data()
-
     try: 
         global MODEL
         X_train, y_train = data['X_train'], data['y_train']
@@ -105,3 +111,42 @@ def evaluate_model():
 async def get_dataset():
     data = get_preprocess_data()
     return {'dataset': data}
+
+# klasa do wysyłania 
+class data_pred(BaseModel):
+    gender: str
+    cust_type: str
+    age: int
+    type_of_tr: str
+    clas: str
+    fl_dist: int
+    wifi: int
+    depart: int
+    online: int
+    gate: int
+    food: int
+    boarding: int
+    seat: int
+    entertainment: int
+    on_board: int
+    leg: int
+    baggage: int
+    checkin: int
+    service: int
+    clean: int
+    dep_delay: int
+    arr_delay: int
+
+
+@app.post('/predict/')
+async def predict(dane: data_pred):
+    # preparing for model
+    response = requests.post('http://preprocess:5000/data_for_pred/', json = dane.model_dump())
+    
+    #recieve model-ready data
+    pred_data = response.json()['data_pred']  
+    pred_data = np.array(pred_data)
+
+    #making prediction
+    y_pred =  MODEL.predict(pred_data)
+    return {'y_pred': y_pred.tolist()}   

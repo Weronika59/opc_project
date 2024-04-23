@@ -4,6 +4,7 @@ import numpy as np
 import mysql.connector
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler, LabelEncoder
+from pydantic import BaseModel
 
 # Database connection configuration
 db_config = {
@@ -25,7 +26,7 @@ def get_data():
         colnames = [column[0] for column in cursor.description]
  
         return {'data': data,
-        'colnames': colnames}
+                'colnames': colnames}
  
     except mysql.connector.Error as error:
         return f"Error: {error}"
@@ -34,15 +35,18 @@ def get_data():
             cursor.close()
             connection.close()
     
+scaler = MinMaxScaler()
+
 # Function to prepare data for model training
 def data_prep():
     data = get_data()
     
     dane = data['data']
     colnames = data['colnames']
-    
+
     dane = pd.DataFrame(dane, columns = colnames)
-        
+    dane = dane.iloc[:, 1:]
+
     #character variables to categorical
     dane.Gender = dane.Gender.eq('Male').astype(int)
 
@@ -86,7 +90,7 @@ def data_prep():
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-    scaler = MinMaxScaler()
+    global scaler
     scaler.fit(X_train)
     
     X_train = scaler.transform(X_train)
@@ -98,12 +102,78 @@ def data_prep():
         'y_test': np.array(y_test).tolist()}
 
 
+# Preparation data for predicion
+def data_prep_pred(data_p):
+    if(data_p.gender=="Male"):
+        gender=0
+    else:
+        gender = 1
+
+    if(data_p.cust_type=="Loyal Customer"):
+        cust_type=1
+    else:
+        cust_type=0
+
+    if(data_p.type_of_tr=="Personal Travel"):
+        type_of_tr=0
+    else:
+        type_of_tr=1
+
+    if(data_p.clas=="Eco"):
+        clas=0
+    elif(data_p.clas=="Eco Plus"):
+        clas=1
+    else:
+        clas=2
+
+    pp = np.array([gender, cust_type, data_p.age, type_of_tr, clas, data_p.fl_dist, data_p.wifi, data_p.depart, data_p.online, data_p.gate, data_p.food, 
+                   data_p.boarding, data_p.seat, data_p.entertainment, data_p.on_board, data_p.leg, data_p.baggage, data_p.checkin, data_p.service, data_p.clean, 
+                   data_p.dep_delay, data_p.arr_delay])
+
+
+    pp = scaler.transform(pp.reshape(1, -1))
+    
+    return pp.tolist()
+
+
 app = FastAPI()
+
+class data_pred(BaseModel):
+    gender: str
+    cust_type: str
+    age: int
+    type_of_tr: str
+    clas: str
+    fl_dist: int
+    wifi: int
+    depart: int
+    online: int
+    gate: int
+    food: int
+    boarding: int
+    seat: int
+    entertainment: int
+    on_board: int
+    leg: int
+    baggage: int
+    checkin: int
+    service: int
+    clean: int
+    dep_delay: int
+    arr_delay: int
+
+# Prepare data for predicion
+@app.post('/data_for_pred/')
+def data_pred2(x: data_pred):
+    dane = data_prep_pred(x)
+    return {'data_pred': dane}
+
+
 # Fetch prepared data
 @app.get("/preprocess_data/")
 def get():
     x = data_prep()
-    return {'data':x}
+    return {'data': x}
 
 # Fetch raw data
 @app.get("/raw_data/")
