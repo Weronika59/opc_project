@@ -27,7 +27,8 @@ Once the model has been learned and evaluated, predictions can be made on the da
 ### Architecture
 
 
-![](C:\Users\wnadw\Downloads\schemat.png "architecture")
+![schemat](https://github.com/Weronika59/opc_project/assets/75950630/edb5ff9c-8ec0-4881-9cea-7bd49267848a)
+
 
 *database* container is responsible for storing data.
 
